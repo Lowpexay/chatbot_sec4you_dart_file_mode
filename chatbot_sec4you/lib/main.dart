@@ -1,0 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'chat_screen.dart';
+
+Future<void> main() async {
+  await dotenv.load();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'Chatbot Sec4You',
+      home: ChatScreen(),
+    );
+  }
+}
