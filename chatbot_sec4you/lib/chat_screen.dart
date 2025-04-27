@@ -2,34 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-void main() async {
-  await dotenv.load();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Assistente Luiz',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF2d004d),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF6a0dad),
-          background: const Color(0xFF2d004d),
-        ),
-      ),
-      home: const ChatScreen(),
-    );
-  }
-}
+import 'leak_check_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.initialMessage});
+
+  final String? initialMessage;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -39,12 +17,22 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Map<String, String>> messages = [];
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+      sendMessage(widget.initialMessage!);
+    }
+  }
 
   Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || isLoading) return;
 
     setState(() {
       messages.add({"sender": "user", "text": text});
+      isLoading = true;
     });
 
     final String apiKey = dotenv.env['API_KEY'] ?? '';
@@ -58,10 +46,23 @@ class _ChatScreenState extends State<ChatScreen> {
             "parts": [
               {
                 "text": """
-                Você é Luiz, assistente da Sec4You. Responda em português brasileiro e seja amigável.
-                Analise o tom emocional da mensagem do usuário e inclua o tom no formato [TOM: feliz, bravo, triste, explicando, neutro].
-                Depois, responda de forma clara e objetiva.
-                Mensagem: $text
+                Você é Luiz, assistente virtual da Sec4You, especializado apenas em temas de **segurança da informação**. Responda **em português brasileiro**.
+                
+                📌 **Instruções gerais:**
+                - Seja objetivo e amigável, mas direto.
+                - Não inicie toda mensagem com saudações como "Olá", "Oi", "Tudo bem?". Apenas a interação inicial.
+                - Responda usando frases curtas e simples.
+                - Não escreva mais do que o necessário para ser claro.
+                
+                🎭 **Tom emocional:**
+                - Analise a mensagem do usuário e indique o tom no formato [TOM: feliz, bravo, triste, explicando, neutro] antes da resposta.
+                
+                🚫 **Assuntos fora do contexto:**
+                - Se o tema não for relacionado à **segurança da informação**, responda apenas:
+                  "Desculpe, não posso te ajudar com isso. Sobre o que de segurança você gostaria de saber?"
+                
+                📩 **Mensagem do usuário:**  
+                $text
                 """
               }
             ]
@@ -90,11 +91,15 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
 
-    _controller.clear();
-    await Future.delayed(const Duration(milliseconds: 100));
+    setState(() {
+      isLoading = false;
+      _controller.clear();
+    });
+
+    await Future.delayed(const Duration(milliseconds: 300));
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeOut,
     );
   }
@@ -138,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.only(left: 8),
               child: CircleAvatar(
                 backgroundColor: Colors.white,
-                backgroundImage: const AssetImage('assets/luiz_avatar.png'),
+                backgroundImage: const AssetImage('assets/feliz.png'),
                 radius: 20,
               ),
             ),
@@ -152,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF2d004d),
       appBar: AppBar(
-        title: const Text("Assistente Luiz"),
+        title: const Text("<Chat Bot./>"),
         backgroundColor: const Color(0xFF4b0082),
         centerTitle: true,
       ),
@@ -174,9 +179,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      enabled: !isLoading,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: "Digite sua mensagem...",
+                        hintText: isLoading ? "Aguarde a resposta..." : "Digite sua mensagem...",
                         hintStyle: const TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: const Color(0xFF3e206b),
@@ -185,12 +191,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
-                      onSubmitted: sendMessage,
+                      onSubmitted: (_) => sendMessage(_controller.text),
                     ),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () => sendMessage(_controller.text),
+                    onPressed: isLoading ? null : () => sendMessage(_controller.text),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6a0dad),
                       shape: const CircleBorder(),
