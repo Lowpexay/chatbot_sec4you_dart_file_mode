@@ -167,83 +167,93 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
   );
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF2d004d),
-      appBar: AppBar(
-        title: const Text('Verificar Vazamentos'),
-        backgroundColor: const Color(0xFF4b0082),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            DropdownButton<String>(
-              value: selectedType,
-              dropdownColor: const Color(0xFF4b0082),
-              iconEnabledColor: Colors.white,
-              items: <String>['Email', 'Senha'].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(
-                    value,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  selectedType = newValue!;
-                  resultMessage = '';
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _dataController,
-              enabled: !isLoading,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                prefixIcon: Icon(
-                  selectedType == 'Email' ? Icons.email : Icons.lock,
-                  color: Colors.white,
-                ),
-                hintText: selectedType == 'Email'
-                    ? 'Digite seu email'
-                    : 'Digite sua senha',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: const Color(0xFF3e206b),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              obscureText: selectedType == 'Senha',
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: isLoading ? null : verifyData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6a0dad),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Verificar', style: TextStyle(color: Colors.white)),
-            ),
-            const SizedBox(height: 20),
-            if (resultMessage.isNotEmpty)
-              Text(
-                resultMessage,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-          ],
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFF0D0D0D), // Preto/Cinza
+    appBar: AppBar(
+      title: const Text(
+        'Verificar Vazamentos',
+        style: TextStyle(
+          color: Color(0xFFFAF9F6), // Branco puro
+          fontWeight: FontWeight.bold,
         ),
       ),
-    );
-
-  }
+      backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
+      centerTitle: true,
+      iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)), // Ícones brancos
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          DropdownButton<String>(
+            value: selectedType,
+            dropdownColor: const Color(0xFF1A1A1A), // Cinza escuro
+            iconEnabledColor: Colors.white,
+            items: <String>['Email', 'Senha'].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              );
+            }).toList(),
+            onChanged: (newValue) {
+              setState(() {
+                selectedType = newValue!;
+                resultMessage = '';
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _dataController,
+            enabled: !isLoading,
+            style: const TextStyle(color: Color(0xFFFAF9F6)), // Branco
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                selectedType == 'Email' ? Icons.email : Icons.lock,
+                color: Colors.white,
+              ),
+              hintText: selectedType == 'Email'
+                  ? 'Digite seu email'
+                  : 'Digite sua senha',
+              hintStyle: const TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: const Color(0xFF1A1A1A), // Cinza escuro
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            obscureText: selectedType == 'Senha',
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: isLoading ? null : verifyData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7F2AB1), // Roxo claro
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            child: isLoading
+                ? const CircularProgressIndicator(color: Color(0xFFFAF9F6)) // Branco
+                : const Text('Verificar', style: TextStyle(color: Color(0xFFFAF9F6))),
+          ),
+          const SizedBox(height: 20),
+          if (resultMessage.isNotEmpty)
+            Text(
+              resultMessage,
+              style: const TextStyle(
+                color: Color(0xFFFAF9F6), // Branco puro
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+        ],
+      ),
+    ),
+  );
+}
 }
