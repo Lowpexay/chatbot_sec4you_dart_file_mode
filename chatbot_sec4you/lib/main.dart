@@ -1,88 +1,106 @@
 import 'package:flutter/material.dart';
-import 'leak_check_screen.dart';
-import 'chat_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'chat_screen.dart';
+import 'leak_check_screen.dart';
+import 'local_data.dart';
+import 'boards_screen.dart';
+import 'board_screen.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
+// Future<void> clearPrefs() async {
+//   final prefs = await SharedPreferences.getInstance();
+//   await prefs.clear();
+// }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  // await clearPrefs(); // Use await aqui!
+  await dotenv.load();
+  await LocalData().init();
+  runApp(const Sec4YouApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+
+class Sec4YouApp extends StatelessWidget {
+  const Sec4YouApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Security Connect',
+    return MaterialApp(
+      title: 'Sec4You',
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1A1A1A),
+          iconTheme: IconThemeData(color: Color(0xFFFAF9F6)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFFFAF9F6),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
+      home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  String _pendingMessage = '';
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0;
+  String _autoMessage = '';
 
-  late final ChatScreen _chatScreen;
-  late final LeakCheckerScreen _leakCheckerScreen;
-
-  @override
-  void initState() {
-    super.initState();
-    _chatScreen = const ChatScreen();
-    _leakCheckerScreen = LeakCheckerScreen(changeTab: _changeTab);
+  void _onTabTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _autoMessage = '';
+    });
   }
 
-  void _changeTab(int index, String message) {
+  void _changeTab(int index, String autoMsg) {
     setState(() {
-      _currentIndex = index;
-      _pendingMessage = message;
+      _selectedIndex = index;
+      _autoMessage = autoMsg;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Se houver mensagem pendente, crie uma nova instância do ChatScreen com a mensagem
-    final List<Widget> _screens = [
-      _pendingMessage.isNotEmpty
-          ? ChatScreen(initialMessage: _pendingMessage)
-          : _chatScreen,
-      _leakCheckerScreen,
+    final screens = [
+      ChatScreen(initialMessage: _autoMessage),
+      LeakCheckerScreen(changeTab: _changeTab),
+      BoardsScreen(),
     ];
 
-    // Limpa a mensagem pendente após exibir
-    if (_pendingMessage.isNotEmpty && _currentIndex == 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _pendingMessage = '';
-        });
-      });
-    }
-
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        backgroundColor: const Color(0xFF1A1A1A),
+        selectedItemColor: const Color(0xFF7F2AB1),
+        unselectedItemColor: const Color(0xFFFAF9F6),
+        currentIndex: _selectedIndex,
+        onTap: _onTabTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chatbot'),
-          BottomNavigationBarItem(icon: Icon(Icons.security), label: 'Verificar Dados'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.security),
+            label: 'Vazamentos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.forum),
+            label: 'Fórum',
+          ),
         ],
       ),
     );
-  }
+  } 
 }

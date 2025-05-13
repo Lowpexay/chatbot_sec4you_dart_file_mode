@@ -128,132 +128,145 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
   }
 
   void showHelpPopup(String message) {
-  final scaffold = ScaffoldMessenger.of(context);
-  scaffold.showSnackBar(
-    SnackBar(
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Expanded(
-            child: Text(
-              'Vazamento Detectado! Deseja conversar com o assistente?',
-              style: TextStyle(color: Colors.white),
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: Text(
+                'Vazamento Detectado! Deseja conversar com o assistente?',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              scaffold.hideCurrentSnackBar();
-              String autoMsg = selectedType == 'Email'
-                  ? "Meu email vazou, o que posso fazer?"
-                  : "Minha senha vazou, o que posso fazer?";
-              widget.changeTab(0, autoMsg);
-            },
-            child: const Text('Sim', style: TextStyle(color: Colors.white)),
-          ),
-          TextButton(
-            onPressed: () {
-              scaffold.hideCurrentSnackBar();
-            },
-            child: const Text('Não', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                scaffold.hideCurrentSnackBar();
+                String autoMsg = selectedType == 'Email'
+                    ? "Meu email vazou, o que posso fazer?"
+                    : "Minha senha vazou, o que posso fazer?";
+                widget.changeTab(0, autoMsg);
+              },
+              child: const Text('Sim', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                scaffold.hideCurrentSnackBar();
+              },
+              child: const Text('Não', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF4b0082),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 30, right: 16, left: 80),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 8),
       ),
-      backgroundColor: const Color(0xFF4b0082),
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.only(bottom: 30, right: 16, left: 80),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      duration: const Duration(seconds: 8),
-    ),
-  );
-}
+    );
+  }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFF0D0D0D), // Preto/Cinza
-    appBar: AppBar(
-      title: const Text(
-        'Verificar Vazamentos',
-        style: TextStyle(
-          color: Color(0xFFFAF9F6), // Branco puro
-          fontWeight: FontWeight.bold,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D0D), // Preto/Cinza
+      appBar: AppBar(
+        title: const Text(
+          'Verificar Vazamentos',
+          style: TextStyle(
+            color: Color(0xFFFAF9F6), // Branco puro
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)), // Ícones brancos
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            DropdownButton<String>(
+              value: selectedType,
+              dropdownColor: const Color(0xFF1A1A1A), // Cinza escuro
+              iconEnabledColor: Colors.white,
+              items: <String>['Email', 'Senha'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedType = newValue!;
+                  resultMessage = '';
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _dataController,
+              enabled: !isLoading,
+              style: const TextStyle(color: Color(0xFFFAF9F6)), // Branco
+              decoration: InputDecoration(
+                prefixIcon: Icon(
+                  selectedType == 'Email' ? Icons.email : Icons.lock,
+                  color: Colors.white,
+                ),
+                hintText: selectedType == 'Email'
+                    ? 'Digite seu email'
+                    : 'Digite sua senha',
+                hintStyle: const TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: const Color(0xFF1A1A1A), // Cinza escuro
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              obscureText: selectedType == 'Senha',
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: isLoading ? null : verifyData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7F2AB1), // Roxo claro
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Color(0xFFFAF9F6)) // Branco
+                  : const Text('Verificar', style: TextStyle(color: Color(0xFFFAF9F6))),
+            ),
+            const SizedBox(height: 20),
+            if (resultMessage.isNotEmpty)
+              Text(
+                resultMessage,
+                style: const TextStyle(
+                  color: Color(0xFFFAF9F6), // Branco puro
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+          ],
         ),
       ),
-      backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
-      centerTitle: true,
-      iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)), // Ícones brancos
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          DropdownButton<String>(
-            value: selectedType,
-            dropdownColor: const Color(0xFF1A1A1A), // Cinza escuro
-            iconEnabledColor: Colors.white,
-            items: <String>['Email', 'Senha'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            }).toList(),
-            onChanged: (newValue) {
-              setState(() {
-                selectedType = newValue!;
-                resultMessage = '';
-              });
-            },
+      bottomNavigationBar: Container(
+        color: const Color(0xFF1A1A1A), // Cinza escuro
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: const Text(
+          'Desenvolvido por Gabriel Gramacho, Mikael Palmeira, Gabriel Araujo e Kauã Granata • 2025',
+          style: TextStyle(
+            color: Color(0xFFFAF9F6), // Branco puro
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
           ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _dataController,
-            enabled: !isLoading,
-            style: const TextStyle(color: Color(0xFFFAF9F6)), // Branco
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                selectedType == 'Email' ? Icons.email : Icons.lock,
-                color: Colors.white,
-              ),
-              hintText: selectedType == 'Email'
-                  ? 'Digite seu email'
-                  : 'Digite sua senha',
-              hintStyle: const TextStyle(color: Colors.white54),
-              filled: true,
-              fillColor: const Color(0xFF1A1A1A), // Cinza escuro
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            obscureText: selectedType == 'Senha',
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: isLoading ? null : verifyData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7F2AB1), // Roxo claro
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
-            child: isLoading
-                ? const CircularProgressIndicator(color: Color(0xFFFAF9F6)) // Branco
-                : const Text('Verificar', style: TextStyle(color: Color(0xFFFAF9F6))),
-          ),
-          const SizedBox(height: 20),
-          if (resultMessage.isNotEmpty)
-            Text(
-              resultMessage,
-              style: const TextStyle(
-                color: Color(0xFFFAF9F6), // Branco puro
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-        ],
+          textAlign: TextAlign.center,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
