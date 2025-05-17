@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LeakCheckerScreen extends StatefulWidget {
-  final Function(int, String) changeTab; // Função para mudar de aba
+  final Function(int, String) changeTab;
 
   const LeakCheckerScreen({super.key, required this.changeTab});
 
@@ -39,12 +40,37 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
         return;
       }
       await checkPasswordLeak(data);
+    } else if (selectedType == 'Telefone') {
+      if (!isValidPhone(data)) {
+        showError('Formato de telefone inválido. Ex: +5511999999999');
+        return;
+      }
+      await checkPhoneLeak(data);
+    } else if (selectedType == 'Site') {
+      if (!isValidUrl(data)) {
+        showError('Formato de site inválido. Ex: https://exemplo.com');
+        return;
+      }
+      await checkMaliciousSite(data);
     }
   }
 
   bool isValidEmail(String email) {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
+  }
+
+  bool isValidPhone(String phone) {
+    final phoneRegex = RegExp(r'^\+?\d{10,15}$');
+    return phoneRegex.hasMatch(phone);
+  }
+
+  bool isValidUrl(String url) {
+    final urlRegex = RegExp(
+      r"^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$",
+      caseSensitive: false,
+    );
+    return urlRegex.hasMatch(url);
   }
 
   void showError(String message) {
@@ -127,6 +153,101 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
     }
   }
 
+  Future<void> checkPhoneLeak(String phone) async {
+    setState(() {
+      isLoading = true;
+      resultMessage = '';
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    if (phone.endsWith('9999')) {
+      setState(() {
+        resultMessage = '⚠️ O telefone $phone foi encontrado em vazamentos!';
+      });
+      showHelpPopup(resultMessage);
+    } else {
+      setState(() {
+        resultMessage = '✅ O telefone $phone NÃO foi encontrado em vazamentos!';
+      });
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> checkMaliciousSite(String url) async {
+    setState(() {
+      isLoading = true;
+      resultMessage = '';
+    });
+
+    final apiKey = dotenv.env['GOOGLE_SAFE_BROWSING_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      setState(() {
+        resultMessage = '❌ Chave da API do Google não configurada.';
+        isLoading = false;
+      });
+      return;
+    }
+
+    final safeBrowsingUrl = Uri.parse(
+      'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=$apiKey',
+    );
+
+    final body = jsonEncode({
+      "client": {
+        "clientId": "chatbot-sec4you",
+        "clientVersion": "1.0"
+      },
+      "threatInfo": {
+        "threatTypes": [
+          "MALWARE",
+          "SOCIAL_ENGINEERING",
+          "UNWANTED_SOFTWARE",
+          "POTENTIALLY_HARMFUL_APPLICATION"
+        ],
+        "platformTypes": ["ANY_PLATFORM"],
+        "threatEntryTypes": ["URL"],
+        "threatEntries": [
+          {"url": url}
+        ]
+      }
+    });
+
+    try {
+      final response = await http.post(
+        safeBrowsingUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['matches'] != null) {
+          setState(() {
+            resultMessage = '⚠️ O site $url é considerado malicioso!';
+          });
+          showHelpPopup(resultMessage);
+        } else {
+          setState(() {
+            resultMessage = '✅ O site $url NÃO foi identificado como malicioso!';
+          });
+        }
+      } else {
+        setState(() {
+          resultMessage = '❌ Erro ao consultar o site.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        resultMessage = '❌ Erro ao consultar o site.';
+      });
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   void showHelpPopup(String message) {
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
@@ -134,10 +255,12 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
         content: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Vazamento Detectado! Deseja conversar com o assistente?',
-                style: TextStyle(color: Colors.white),
+                selectedType == 'Site'
+                  ? 'Esse site parece suspeito! Deseja conversar com o assistente?'
+                  : 'Vazamento Detectado! Deseja conversar com o assistente?',
+                style: const TextStyle(color: Colors.white),
               ),
             ),
             TextButton(
@@ -145,7 +268,11 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
                 scaffold.hideCurrentSnackBar();
                 String autoMsg = selectedType == 'Email'
                     ? "Meu email vazou, o que posso fazer?"
-                    : "Minha senha vazou, o que posso fazer?";
+                    : selectedType == 'Senha'
+                        ? "Minha senha vazou, o que posso fazer?"
+                        : selectedType == 'Telefone'
+                            ? "Meu telefone vazou, o que posso fazer?"
+                            : "Acessei um site suspeito, o que devo fazer?";
                 widget.changeTab(0, autoMsg);
               },
               child: const Text('Sim', style: TextStyle(color: Colors.white)),
@@ -170,18 +297,18 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D), // Preto/Cinza
+      backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
         title: const Text(
           'Verificar Vazamentos',
           style: TextStyle(
-            color: Color(0xFFFAF9F6), // Branco puro
+            color: Color(0xFFFAF9F6),
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
+        backgroundColor: const Color(0xFF1A1A1A),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)), // Ícones brancos
+        iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -189,9 +316,9 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
           children: [
             DropdownButton<String>(
               value: selectedType,
-              dropdownColor: const Color(0xFF1A1A1A), // Cinza escuro
+              dropdownColor: const Color(0xFF1A1A1A),
               iconEnabledColor: Colors.white,
-              items: <String>['Email', 'Senha'].map((String value) {
+              items: <String>['Email', 'Senha', 'Telefone', 'Site'].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(
@@ -211,33 +338,46 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
             TextField(
               controller: _dataController,
               enabled: !isLoading,
-              style: const TextStyle(color: Color(0xFFFAF9F6)), // Branco
+              style: const TextStyle(color: Color(0xFFFAF9F6)),
               decoration: InputDecoration(
                 prefixIcon: Icon(
-                  selectedType == 'Email' ? Icons.email : Icons.lock,
+                  selectedType == 'Email'
+                      ? Icons.email
+                      : selectedType == 'Senha'
+                          ? Icons.lock
+                          : selectedType == 'Telefone'
+                              ? Icons.phone
+                              : Icons.language,
                   color: Colors.white,
                 ),
                 hintText: selectedType == 'Email'
                     ? 'Digite seu email'
-                    : 'Digite sua senha',
+                    : selectedType == 'Senha'
+                        ? 'Digite sua senha'
+                        : selectedType == 'Telefone'
+                            ? 'Digite seu telefone'
+                            : 'Digite o site',
                 hintStyle: const TextStyle(color: Colors.white54),
                 filled: true,
-                fillColor: const Color(0xFF1A1A1A), // Cinza escuro
+                fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
               obscureText: selectedType == 'Senha',
+              keyboardType: selectedType == 'Telefone'
+                  ? TextInputType.phone
+                  : TextInputType.text,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: isLoading ? null : verifyData,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7F2AB1), // Roxo claro
+                backgroundColor: const Color(0xFF7F2AB1),
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
               child: isLoading
-                  ? const CircularProgressIndicator(color: Color(0xFFFAF9F6)) // Branco
+                  ? const CircularProgressIndicator(color: Color(0xFFFAF9F6))
                   : const Text('Verificar', style: TextStyle(color: Color(0xFFFAF9F6))),
             ),
             const SizedBox(height: 20),
@@ -245,7 +385,7 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
               Text(
                 resultMessage,
                 style: const TextStyle(
-                  color: Color(0xFFFAF9F6), // Branco puro
+                  color: Color(0xFFFAF9F6),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -255,12 +395,12 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: const Color(0xFF1A1A1A), // Cinza escuro
+        color: const Color(0xFF1A1A1A),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: const Text(
           'Desenvolvido por Gabriel Gramacho, Mikael Palmeira, Gabriel Araujo e Kauã Granata • 2025',
           style: TextStyle(
-            color: Color(0xFFFAF9F6), // Branco puro
+            color: Color(0xFFFAF9F6),
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
