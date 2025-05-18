@@ -3,12 +3,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
-import 'firebase_messaging_service.dart'; // <-- novo arquivo que você vai criar
+import 'firebase_messaging_service.dart';
 import 'chat_screen.dart';
 import 'leak_check_screen.dart';
 import 'local_data.dart';
 import 'boards_screen.dart';
 import 'board_screen.dart';
+import 'user_location_service.dart';
+import 'users_map_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +19,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await FirebaseMessagingService.initialize(); // inicializa notificações
+  await FirebaseMessagingService.initialize();
+  await UserLocationService.saveUserLocation(); // <-- Salva localização ao abrir o app
   runApp(const Sec4YouApp());
 }
 
@@ -39,13 +42,18 @@ class Sec4YouApp extends StatelessWidget {
             fontSize: 20,
           ),
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF1A1A1A),
+          selectedItemColor: Color(0xFF7F2AB1),
+          unselectedItemColor: Color(0xFFFAF9F6),
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
       home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
-
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -78,14 +86,12 @@ class _MainNavigationState extends State<MainNavigation> {
       ChatScreen(initialMessage: _autoMessage),
       LeakCheckerScreen(changeTab: _changeTab),
       BoardsScreen(),
+      UsersMapScreen(),
     ];
 
     return Scaffold(
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        selectedItemColor: const Color(0xFF7F2AB1),
-        unselectedItemColor: const Color(0xFFFAF9F6),
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
         items: const [
@@ -101,8 +107,12 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.forum),
             label: 'Fórum',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Mapa',
+          ),
         ],
       ),
     );
   }
-} 
+}
