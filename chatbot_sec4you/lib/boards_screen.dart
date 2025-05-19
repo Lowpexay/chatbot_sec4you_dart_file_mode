@@ -52,7 +52,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
         title: const Text(
-          'Fórum',
+          '<Fórum./>',
           style: TextStyle(
             color: Color(0xFFFAF9F6),
             fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
         color: const Color(0xFF1A1A1A),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: const Text(
-          'Desenvolvido por Gabriel Gramacho, Mikael Palmeira, Gabriel Araujo e Kauã Granata • 2025',
+          'Desenvolvido por Gabriel Gramacho, Mikael Palmeira, Gabriel Araujo, Gustavo Teodoro e Kauã Granata • 2025',
           style: TextStyle(
             color: Color(0xFFFAF9F6),
             fontSize: 14,

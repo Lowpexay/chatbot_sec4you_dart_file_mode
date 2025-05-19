@@ -9,7 +9,7 @@ class UsersMapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mapa de Usuários')),
+      appBar: AppBar(title: const Text('<Mapa de Usuários./>')),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('user_locations').snapshots(),
         builder: (context, snapshot) {
