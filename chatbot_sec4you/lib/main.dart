@@ -1,3 +1,4 @@
+import 'package:chatbot_sec4you/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'chat_screen.dart';
@@ -5,20 +6,13 @@ import 'leak_check_screen.dart';
 import 'local_data.dart';
 import 'boards_screen.dart';
 import 'board_screen.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 
-// Future<void> clearPrefs() async {
-//   final prefs = await SharedPreferences.getInstance();
-//   await prefs.clear();
-// }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await clearPrefs(); // Use await aqui!
   await dotenv.load();
   await LocalData().init();
   runApp(const Sec4YouApp());
 }
-
 
 class Sec4YouApp extends StatelessWidget {
   const Sec4YouApp({super.key});
@@ -28,6 +22,7 @@ class Sec4YouApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sec4You',
       theme: ThemeData(
+        useMaterial3: false,
         scaffoldBackgroundColor: const Color(0xFF0D0D0D),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF1A1A1A),
@@ -36,8 +31,16 @@ class Sec4YouApp extends StatelessWidget {
             color: Color(0xFFFAF9F6),
             fontWeight: FontWeight.bold,
             fontSize: 20,
+            fontFamily: 'JetBrainsMono',
           ),
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF1A1A1A),
+          selectedItemColor: Color(0xFF7F2AB1),
+          unselectedItemColor: Color(0xFFFAF9F6),
+          type: BottomNavigationBarType.fixed,
+        ),
+        fontFamily: 'JetBrainsMono',
       ),
       home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
@@ -73,6 +76,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final screens = [
+      HomeScreen(),
       ChatScreen(initialMessage: _autoMessage),
       LeakCheckerScreen(changeTab: _changeTab),
       BoardsScreen(),
@@ -81,12 +85,13 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        selectedItemColor: const Color(0xFF7F2AB1),
-        unselectedItemColor: const Color(0xFFFAF9F6),
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.house),
+            label: 'Inicio',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             label: 'Chat',
@@ -102,5 +107,5 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
       ),
     );
-  } 
+  }
 }
