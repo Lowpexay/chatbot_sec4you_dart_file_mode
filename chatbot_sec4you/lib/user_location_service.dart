@@ -28,4 +28,10 @@ class UserLocationService {
       });
     }
   }
+
+  // NOVO MÉTODO: Conta usuários ativos
+  static Future<int> getActiveUsersCount() async {
+    final snapshot = await FirebaseFirestore.instance.collection('user_locations').get();
+    return snapshot.docs.length;
+  }
 }
