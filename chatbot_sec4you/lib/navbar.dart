@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 
-/// Barra de navegação customizada com círculo central elevado
 class CustomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -14,55 +13,61 @@ class CustomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-    height: 60.5, 
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      height: 80,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: BottomNavigationBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         showSelectedLabels: false,
         showUnselectedLabels: false,
         selectedFontSize: 0,
         unselectedFontSize: 0,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         type: BottomNavigationBarType.fixed,
         iconSize: 36,
         currentIndex: currentIndex,
         onTap: onTap,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home,
-              size: 36,
-              color: currentIndex == 0
-                  ? AppTheme.primaryColor
-                  : AppTheme.textColor,
-            ),
+            icon: Icon(Icons.home,
+                color: currentIndex == 0
+                    ? colorScheme.primary
+                    : colorScheme.onSurface),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.book,
-              size: 36,
-              color: currentIndex == 1
-                  ? AppTheme.primaryColor
-                  : AppTheme.textColor,
-            ),
+            icon: Icon(Icons.book,
+                color: currentIndex == 1
+                    ? colorScheme.primary
+                    : colorScheme.onSurface),
             label: '',
           ),
-
-          // Ícone central
           BottomNavigationBarItem(
             icon: Transform.translate(
-              offset: const Offset(0, -34), // metade do círculo pra fora
+              offset: const Offset(0, -20),
               child: Container(
-                width: 68,  // 60 interno + 4*2 de borda
+                width: 68,
                 height: 68,
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundColor,
+                  color: colorScheme.background,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: currentIndex == 2
-                        ? AppTheme.primaryColor
-                        : AppTheme.boxColor,
+                        ? colorScheme.primary
+                        : colorScheme.outline,
                     width: 4,
                   ),
                 ),
@@ -77,25 +82,18 @@ class CustomNavBar extends StatelessWidget {
             ),
             label: '',
           ),
-
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.security,
-              size: 36,
-              color: currentIndex == 3
-                  ? AppTheme.primaryColor
-                  : AppTheme.textColor,
-            ),
+            icon: Icon(Icons.security,
+                color: currentIndex == 3
+                    ? colorScheme.primary
+                    : colorScheme.onSurface),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.person,
-              size: 36,
-              color: currentIndex == 4
-                  ? AppTheme.primaryColor
-                  : AppTheme.textColor,
-            ),
+            icon: Icon(Icons.person,
+                color: currentIndex == 4
+                    ? colorScheme.primary
+                    : colorScheme.onSurface),
             label: '',
           ),
         ],

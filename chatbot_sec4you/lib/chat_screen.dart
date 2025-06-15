@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'leak_check_screen.dart';
+import 'core/theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.initialMessage});
-
   final String? initialMessage;
 
   @override
@@ -22,7 +21,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+    if (widget.initialMessage?.isNotEmpty ?? false) {
       sendMessage(widget.initialMessage!);
     }
   }
@@ -35,36 +34,17 @@ class _ChatScreenState extends State<ChatScreen> {
       isLoading = true;
     });
 
-    final String apiKey = dotenv.env['API_KEY'] ?? '';
+    final apiKey = dotenv.env['API_KEY'] ?? '';
     final response = await http.post(
-      Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey'),
+      Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "contents": [
           {
             "role": "user",
             "parts": [
-              {
-                "text": """
-                Você é Luiz, assistente virtual da Sec4You, especializado apenas em temas de **segurança da informação**. Responda **em português brasileiro**.
-                
-                📌 **Instruções gerais:**
-                - Seja objetivo e amigável, mas direto.
-                - Não inicie toda mensagem com saudações como "Olá", "Oi", "Tudo bem?". Apenas a interação inicial.
-                - Responda usando frases curtas e simples.
-                - Não escreva mais do que o necessário para ser claro.
-                
-                🎭 **Tom emocional:**
-                - Analise a mensagem do usuário e indique o tom no formato [TOM: feliz, bravo, triste, explicando, neutro] antes da resposta.
-                
-                🚫 **Assuntos fora do contexto:**
-                - Se o tema não for relacionado à **segurança da informação**, responda apenas:
-                  "Desculpe, não posso te ajudar com isso. Sobre o que de segurança você gostaria de saber?"
-                
-                📩 **Mensagem do usuário:**  
-                $text
-                """
-              }
+              {"text": "📩 Mensagem do usuário: $text"}
             ]
           }
         ]
@@ -74,21 +54,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final aiText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? 'Sem resposta.';
-      setState(() {
-        messages.add({
-          "sender": "ai",
-          "text": aiText,
-          "mood": "neutro",
-        });
-      });
+      setState(() => messages.add({"sender": "ai", "text": aiText}));
     } else {
-      setState(() {
-        messages.add({
-          "sender": "ai",
-          "text": "Erro ao se comunicar com o assistente. 😢",
-          "mood": "erro",
-        });
-      });
+      setState(() => messages.add({"sender": "ai", "text": "Erro ao se comunicar. 😢"}));
     }
 
     setState(() {
@@ -105,49 +73,26 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget buildMessage(Map<String, String> msg) {
-    bool isUser = msg['sender'] == "user";
+    final isUser = msg['sender'] == 'user';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (isUser)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: CircleAvatar(
-                backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
-                child: const Icon(Icons.person, color: Color(0xFFFAF9F6)), // Branco
-              ),
-            ),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isUser ? const Color(0xFF1A1A1A) : const Color(0xFF232323), // Cinza escuro / Cinza um pouco mais claro
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: isUser ? const Radius.circular(0) : const Radius.circular(18),
-                  bottomRight: isUser ? const Radius.circular(18) : const Radius.circular(0),
-                ),
-              ),
-              child: Text(
-                msg['text'] ?? '',
-                style: const TextStyle(color: Color(0xFFFAF9F6), fontSize: 16), // Branco
-              ),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.boxColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            msg['text'] ?? '',
+            style: const TextStyle(
+              fontSize: 16,
+              fontFamily: 'JetBrainsMono',
+              color: AppTheme.primaryColor,
             ),
           ),
-          if (!isUser)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: CircleAvatar(
-                backgroundColor: const Color(0xFF232323), // Cinza um pouco mais claro
-                backgroundImage: const AssetImage('assets/feliz.png'),
-                radius: 20,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -155,81 +100,87 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D), // Preto/Cinza
-      appBar: AppBar(
-        title: const Text(
-          "<Chat Bot./>",
-          style: TextStyle(
-            color: Color(0xFFFAF9F6), // Branco puro
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: const Color(0xFF1A1A1A), // Cinza escuro
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Color(0xFFFAF9F6)), // Ícones brancos
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: messages.length,
-                itemBuilder: (context, index) => buildMessage(messages[index]),
+      extendBody: true, // permite a navbar ficar flutuando
+      backgroundColor: AppTheme.backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(50),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Text(
+                "<Chat Bot./>",
+                style: const TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontFamily: 'JetBrainsMono',
+                ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(10),
-              color: const Color(0xFF0D0D0D), // Preto/Cinza
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      enabled: !isLoading,
-                      style: const TextStyle(color: Color(0xFFFAF9F6)), // Branco
-                      decoration: InputDecoration(
-                        hintText: isLoading ? "Aguarde a resposta..." : "Digite sua mensagem...",
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        filled: true,
-                        fillColor: const Color(0xFF1A1A1A), // Cinza escuro
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      onSubmitted: (_) => sendMessage(_controller.text),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : () => sendMessage(_controller.text),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7F2AB1), // Roxo claro
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(12),
-                    ),
-                    child: const Icon(Icons.send, color: Color(0xFFFAF9F6)), // Branco
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        color: const Color(0xFF1A1A1A), // Cinza escuro
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: const Text(
-          'Desenvolvido por Gabriel Gramacho, Mikael Palmeira, Gabriel Araujo e Kauã Granata • 2025',
-          style: TextStyle(
-            color: Color(0xFFFAF9F6), // Branco puro
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
           ),
-          textAlign: TextAlign.center,
         ),
       ),
+body: Padding(
+  padding: const EdgeInsets.only(bottom: 90), // reserva espaço para a navbar
+  child: Column(
+    children: [
+      Expanded(
+        child: ListView.builder(
+          controller: _scrollController,
+          itemCount: messages.length,
+          itemBuilder: (context, index) => buildMessage(messages[index]),
+        ),
+      ),
+
+      // Campo de input com espaçamento embutido
+      Padding(
+        padding: const EdgeInsets.only(left: 12, right: 12, bottom: 10),
+        child: TextField(
+          controller: _controller,
+          enabled: !isLoading,
+          style: const TextStyle(
+            color: AppTheme.primaryColor,
+            fontFamily: 'JetBrainsMono',
+          ),
+          onSubmitted: (_) => sendMessage(_controller.text),
+          decoration: InputDecoration(
+            hintText: isLoading ? "Aguarde a resposta..." : "Digite Aqui...",
+            hintStyle: const TextStyle(
+              color: AppTheme.primaryColor,
+              fontFamily: 'JetBrainsMono',
+            ),
+            filled: true,
+            fillColor: AppTheme.boxColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: isLoading ? null : () => sendMessage(_controller.text),
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.play_arrow, color: AppTheme.textColor),
+                ),
+              ),
+            ),
+            suffixIconConstraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
+
+
     );
   }
 }
