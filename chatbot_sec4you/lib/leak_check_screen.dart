@@ -273,7 +273,7 @@ class _LeakCheckerScreenState extends State<LeakCheckerScreen> {
                         : selectedType == 'Telefone'
                             ? "Meu telefone vazou, o que posso fazer?"
                             : "Acessei um site suspeito, o que devo fazer?";
-                widget.changeTab(0, autoMsg);
+                widget.changeTab(1, autoMsg);
               },
               child: const Text('Sim', style: TextStyle(color: Colors.white)),
             ),

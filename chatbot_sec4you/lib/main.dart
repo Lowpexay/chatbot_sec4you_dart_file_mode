@@ -11,6 +11,7 @@ import 'boards_screen.dart';
 import 'board_screen.dart';
 import 'user_location_service.dart';
 import 'users_map_screen.dart';
+import 'home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await FirebaseMessagingService.initialize();
-  await UserLocationService.saveUserLocation(); // <-- Salva localização ao abrir o app
+  await UserLocationService.saveUserLocation(); // Salva localização ao abrir o app
   runApp(const Sec4YouApp());
 }
 
@@ -32,6 +33,7 @@ class Sec4YouApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sec4You',
       theme: ThemeData(
+        useMaterial3: false,
         scaffoldBackgroundColor: const Color(0xFF0D0D0D),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF1A1A1A),
@@ -40,6 +42,7 @@ class Sec4YouApp extends StatelessWidget {
             color: Color(0xFFFAF9F6),
             fontWeight: FontWeight.bold,
             fontSize: 20,
+            fontFamily: 'JetBrainsMono',
           ),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -48,6 +51,7 @@ class Sec4YouApp extends StatelessWidget {
           unselectedItemColor: Color(0xFFFAF9F6),
           type: BottomNavigationBarType.fixed,
         ),
+        fontFamily: 'JetBrainsMono',
       ),
       home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
@@ -83,6 +87,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final screens = [
+      HomeScreen(),
       ChatScreen(initialMessage: _autoMessage),
       LeakCheckerScreen(changeTab: _changeTab),
       BoardsScreen(),
@@ -95,6 +100,10 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.house),
+            label: 'Início',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             label: 'Chat',
