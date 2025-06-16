@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/app_styles.dart';
 import 'chat_screen.dart';
 import 'leak_check_screen.dart';
 import 'local_data.dart';
 import 'boards_screen.dart';
+import 'navbar.dart';
 import 'board_screen.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 
-// Future<void> clearPrefs() async {
-//   final prefs = await SharedPreferences.getInstance();
-//   await prefs.clear();
-// }
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await clearPrefs(); // Use await aqui!
   await dotenv.load();
   await LocalData().init();
   runApp(const Sec4YouApp());
 }
-
 
 class Sec4YouApp extends StatelessWidget {
   const Sec4YouApp({super.key});
@@ -27,18 +23,7 @@ class Sec4YouApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sec4You',
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1A1A1A),
-          iconTheme: IconThemeData(color: Color(0xFFFAF9F6)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFFFAF9F6),
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
+      theme: AppTheme.darkTheme(),
       home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
     );
@@ -70,37 +55,29 @@ class _MainNavigationState extends State<MainNavigation> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final screens = [
-      ChatScreen(initialMessage: _autoMessage),
-      LeakCheckerScreen(changeTab: _changeTab),
-      BoardsScreen(),
-    ];
+@override
+Widget build(BuildContext context) {
+  final screens = [
+    ChatScreen(initialMessage: _autoMessage),
+    const Center(child: Text('Guide Screen')),
+    ChatScreen(initialMessage: _autoMessage),
+    LeakCheckerScreen(changeTab: _changeTab),
+    const Center(child: Text('Profile Screen')),
+  ];
 
-    return Scaffold(
-      body: screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        selectedItemColor: const Color(0xFF7F2AB1),
-        unselectedItemColor: const Color(0xFFFAF9F6),
-        currentIndex: _selectedIndex,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.security),
-            label: 'Vazamentos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.forum),
-            label: 'Fórum',
-          ),
-        ],
-      ),
-    );
-  } 
+return Scaffold(
+  
+  extendBody: true, // permite blur/transparência abaixo da navbar
+  body: screens[_selectedIndex],
+  bottomNavigationBar: Padding(
+    padding: const EdgeInsets.only(bottom: 10, left: 20, right: 20), // afasta do fundo
+    child: CustomNavBar(
+    currentIndex: _selectedIndex,
+    onTap: _onTabTapped,
+    ),
+  ),
+
+  floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+);
+}
 }
