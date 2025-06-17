@@ -1,17 +1,41 @@
-import 'package:chatbot_sec4you/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+
+import 'service/auth_service.dart';
+import 'login_page.dart';
+import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'leak_check_screen.dart';
-import 'local_data.dart';
 import 'boards_screen.dart';
-import 'board_screen.dart';
+
+class AuthCheck extends StatelessWidget {
+  const AuthCheck({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthService>(context);
+
+    if (auth.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return auth.usuario != null ? const MainNavigation() : const LoginPage();
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
-  await LocalData().init();
-  runApp(const Sec4YouApp());
+  await Firebase.initializeApp();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthService(),
+      child: const Sec4YouApp(),
+    ),
+  );
 }
 
 class Sec4YouApp extends StatelessWidget {
@@ -42,7 +66,7 @@ class Sec4YouApp extends StatelessWidget {
         ),
         fontFamily: 'JetBrainsMono',
       ),
-      home: const MainNavigation(),
+      home: const AuthCheck(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -59,11 +83,15 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
   String _autoMessage = '';
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _autoMessage = '';
-    });
+  void _onTabTapped(int index) async {
+    if (index == 4) {
+      await Provider.of<AuthService>(context, listen: false).logout();
+    } else {
+      setState(() {
+        _selectedIndex = index;
+        _autoMessage = '';
+      });
+    }
   }
 
   void _changeTab(int index, String autoMsg) {
@@ -80,6 +108,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ChatScreen(initialMessage: _autoMessage),
       LeakCheckerScreen(changeTab: _changeTab),
       BoardsScreen(),
+      Container(), // Aba vazia para logout
     ];
 
     return Scaffold(
@@ -103,6 +132,10 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.forum),
             label: 'Fórum',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.logout),
+            label: 'Sair',
           ),
         ],
       ),

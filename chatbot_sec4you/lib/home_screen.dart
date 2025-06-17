@@ -1,14 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const purple = Color(0xFF9F45FF);
-    const bg = Color(0xFF0D0D0D);
-    const darkCard = Color(0xFF1A1A1A);
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  final Color purple = const Color(0xFF9F45FF);
+  final Color bg = const Color(0xFF0D0D0D);
+  final Color darkCard = const Color(0xFF1A1A1A);
+
+  String? nomeUsuario;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarNomeUsuario();
+  }
+
+  Future<void> _carregarNomeUsuario() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null) {
+          setState(() {
+            nomeUsuario = data['nome'] ?? 'Usuário';
+          });
+        }
+      } else {
+        setState(() {
+          nomeUsuario = 'Usuário';
+        });
+      }
+    } else {
+      setState(() {
+        nomeUsuario = 'Usuário';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
       body: Padding(
@@ -18,17 +58,17 @@ class HomeScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 32),
             Row(
-              children: const [
+              children: [
                 Icon(Icons.play_arrow, color: purple),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
-                  'Bem-vindo de volta <Usuario./>',
+                  'Bem-vindo de volta ${nomeUsuario ?? ''}',
                   style: TextStyle(color: purple, fontSize: 18),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            
+
             // CARD DO CURSO
             Container(
               padding: const EdgeInsets.all(16),
@@ -49,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                             Text(
                               'Continuar curso?',
                               style: TextStyle(
-                                color: purple,
+                                color: Color(0xFF9F45FF),
                                 fontSize: 18,
                                 fontFamily: 'JetBrainsMono',
                               ),
@@ -71,16 +111,16 @@ class HomeScreen extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.play_arrow, color: purple),
+                      const Icon(Icons.play_arrow, color: Color(0xFF9F45FF)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: SizedBox(
                           height: 10,
                           child: LinearProgressIndicator(
                             value: 0.5,
-                            backgroundColor: const Color.fromARGB(255,231,230,230,),
+                            backgroundColor: const Color.fromARGB(255, 231, 230, 230),
                             valueColor: AlwaysStoppedAnimation<Color>(purple),
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                            borderRadius: const BorderRadius.all(Radius.circular(10)),
                           ),
                         ),
                       ),
