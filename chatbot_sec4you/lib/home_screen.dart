@@ -1,7 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? firstName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstNameFromFirestore();
+  }
+
+  Future<void> _loadFirstNameFromFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data()?['nome'] != null) {
+        setState(() {
+          firstName = doc.data()!['nome'];
+        });
+      } else {
+        setState(() {
+          firstName = 'Usuário';
+        });
+      }
+    } else {
+      setState(() {
+        firstName = 'Usuário';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,110 +51,109 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: bg,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 32),
-            Row(
-              children: const [
-                Icon(Icons.play_arrow, color: purple),
-                SizedBox(width: 8),
-                Text(
-                  'Bem-vindo de volta <Usuario./>',
-                  style: TextStyle(color: purple, fontSize: 18),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            // CARD DO CURSO
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: darkCard,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
+        child: firstName == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Continuar curso?',
-                              style: TextStyle(
-                                color: purple,
-                                fontSize: 18,
-                                fontFamily: 'JetBrainsMono',
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Fire Wall\nMódulo 1 - atividade 5',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.local_fire_department,
-                        color: purple,
-                        size: 48,
-                      ),
-                    ],
-                  ),
+                  const SizedBox(height: 32),
                   Row(
                     children: [
                       const Icon(Icons.play_arrow, color: purple),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Bem-vindo de volta, $firstName.',
+                        style: const TextStyle(color: purple, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // CARD DO CURSO
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: darkCard,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Continuar curso?',
+                                    style: TextStyle(
+                                      color: purple,
+                                      fontSize: 18,
+                                      fontFamily: 'JetBrainsMono',
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Fire Wall\nMódulo 1 - atividade 5',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.local_fire_department,
+                              color: purple,
+                              size: 48,
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.play_arrow, color: purple),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SizedBox(
+                                height: 10,
+                                child: LinearProgressIndicator(
+                                  value: 0.5,
+                                  backgroundColor: const Color.fromARGB(255,231,230,230,),
+                                  valueColor: AlwaysStoppedAnimation<Color>(purple),
+                                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // CARDS DE NOTIFICAÇÕES E ALERTAS
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CardInfo(
+                          title: 'Você tem',
+                          value: '9+',
+                          subtitle: 'Notificações',
+                          color: purple,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: SizedBox(
-                          height: 10,
-                          child: LinearProgressIndicator(
-                            value: 0.5,
-                            backgroundColor: const Color.fromARGB(255,231,230,230,),
-                            valueColor: AlwaysStoppedAnimation<Color>(purple),
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
+                        child: CardInfo(
+                          title: 'Você tem',
+                          value: '1',
+                          subtitle: 'Alerta de segurança',
+                          color: purple,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // CARDS DE NOTIFICAÇÕES E ALERTAS
-            Row(
-              children: [
-                Expanded(
-                  child: CardInfo(
-                    title: 'Você tem',
-                    value: '9+',
-                    subtitle: 'Notificações',
-                    color: purple,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: CardInfo(
-                    title: 'Você tem',
-                    value: '1',
-                    subtitle: 'Alerta de segurança',
-                    color: purple,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
       ),
     );
   }

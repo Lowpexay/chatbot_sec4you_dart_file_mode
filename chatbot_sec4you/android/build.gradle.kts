@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.google.gms:google-services:4.4.1")
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -13,7 +23,16 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
-    project.evaluationDependsOn(":app")
+    afterEvaluate {
+        if (project.plugins.hasPlugin("com.android.library") || project.plugins.hasPlugin("com.android.application")) {
+            extensions.findByName("android")?.let { ext ->
+                ext as com.android.build.gradle.BaseExtension
+                if (ext.compileSdkVersion == null) {
+                    ext.compileSdkVersion(34) // ou o valor do seu projeto
+                }
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
