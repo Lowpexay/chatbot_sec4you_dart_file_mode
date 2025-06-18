@@ -13,7 +13,7 @@ class UsersMapScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('<Mapa de Usuários./>')),
       body: Stack(
         children: [
-          // Mapa dos usuários
+          // Mapa dos usuárioss
           Positioned.fill(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collection('user_locations').snapshots(),
